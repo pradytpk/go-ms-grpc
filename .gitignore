@@ -1,0 +1,6 @@
+index.html
+.envrc
+bin/build-errors.log
+bin/main
+.vscode/
+.env
