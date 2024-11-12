@@ -13,6 +13,8 @@ require (
 )
 
 require (
+	github.com/mailru/easyjson v0.7.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
@@ -29,4 +31,5 @@ require (
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/tinrab/retry v1.0.0
+	gopkg.in/olivere/elastic.v5 v5.0.86
 )
