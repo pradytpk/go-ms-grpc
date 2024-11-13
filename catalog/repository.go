@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 
 	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 var (
-	ErrNotFound = errors.New("Entity not found")
+	ErrNotFound = errors.New("entity not found")
 )
 
 const (
@@ -23,7 +24,7 @@ type Repository interface {
 	GetProductsByID(ctx context.Context, id string) (*Product, error)
 	ListsProducts(ctx context.Context, skip, take uint64) ([]Product, error)
 	ListsProductsWithIDs(ctx context.Context, ids []string) ([]Product, error)
-	SearchProducts(ctx context.Context, qurey string, skip uint64, take uint64) ([]Product, error)
+	SearchProducts(ctx context.Context, query string, skip uint64, take uint64) ([]Product, error)
 }
 
 type elasticRepository struct {
@@ -49,7 +50,6 @@ func NewElasticRepository(url string) (Repository, error) {
 
 // Close implements Repository.
 func (e *elasticRepository) Close() {
-	panic("unimplemented")
 }
 
 // GetProductsByID implements Repository.
@@ -80,12 +80,52 @@ func (e *elasticRepository) GetProductsByID(ctx context.Context, id string) (*Pr
 
 // ListsProducts implements Repository.
 func (e *elasticRepository) ListsProducts(ctx context.Context, skip uint64, take uint64) ([]Product, error) {
-	panic("unimplemented")
+	res, err := e.client.Search().Index(catalog).Type(product).Query(elastic.NewMatchAllQuery()).From(int(skip)).Size(int(take)).Do(ctx)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	products := []Product{}
+
+	for _, hit := range res.Hits.Hits {
+		p := productDocument{}
+		if err = json.Unmarshal(*hit.Source, &p); err == nil {
+			products = append(products, Product{
+				ID:          hit.Id,
+				Name:        p.Name,
+				Description: p.Description,
+				Price:       p.Price,
+			})
+		}
+	}
+	return products, nil
 }
 
 // ListsProductsWithIDs implements Repository.
 func (e *elasticRepository) ListsProductsWithIDs(ctx context.Context, ids []string) ([]Product, error) {
-	panic("unimplemented")
+	items := []*elastic.MultiGetItem{}
+	for _, id := range ids {
+		items = append(items,
+			elastic.NewMultiGetItem().Index(catalog).Type(product).Id(id))
+	}
+	res, err := e.client.MultiGet().Add(items...).Do(ctx)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	products := []Product{}
+	for _, doc := range res.Docs {
+		p := productDocument{}
+		if err = json.Unmarshal(*doc.Source, &p); err == nil {
+			products = append(products, Product{
+				ID:          doc.Id,
+				Name:        p.Name,
+				Description: p.Description,
+				Price:       p.Price,
+			})
+		}
+	}
+	return products, nil
 }
 
 // PutProduct implements Repository.
@@ -104,6 +144,28 @@ func (e *elasticRepository) PutProduct(ctx context.Context, p Product) error {
 }
 
 // SearchProducts implements Repository.
-func (e *elasticRepository) SearchProducts(ctx context.Context, qurey string, skip uint64, take uint64) ([]Product, error) {
-	panic("unimplemented")
+func (e *elasticRepository) SearchProducts(ctx context.Context, query string, skip uint64, take uint64) ([]Product, error) {
+	res, err := e.client.Search().
+		Index(catalog).
+		Type(product).
+		Query(elastic.NewMultiMatchQuery(query, "name", "description")).
+		From(int(skip)).Size(int(take)).
+		Do(ctx)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	products := []Product{}
+	for _, hits := range res.Hits.Hits {
+		p := productDocument{}
+		if err = json.Unmarshal(*hits.Source, &p); err == nil {
+			products = append(products, Product{
+				ID:          hits.Id,
+				Name:        p.Name,
+				Description: p.Description,
+				Price:       p.Price,
+			})
+		}
+	}
+	return products, nil
 }
