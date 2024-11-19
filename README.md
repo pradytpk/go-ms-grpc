@@ -26,5 +26,7 @@ protoc -I=. --go_out=. --go-grpc_out=. account.proto
 
 protoc -I=. --go_out=. --go-grpc_out=. catalog.proto
 
+protoc -I=. --go_out=. --go-grpc_out=. order.proto
+
 export DATABASE_URL=postgres://admin:adminpassword@localhost/social?sslmode=disable
 ```
