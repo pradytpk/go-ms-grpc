@@ -31,7 +31,7 @@ func main() {
 		return nil
 	})
 	defer r.Close()
-	log.Println("listening on port 8080")
+	log.Println("listening on account port 8080")
 	s := account.NewService(r)
 	log.Fatal(account.ListenGRPC(s, 8080))
 }

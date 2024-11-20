@@ -129,7 +129,7 @@ func (p *postgresRepository) PutOrder(ctx context.Context, o Order) error {
 }
 
 func NewPostgressRepository(url string) (Repository, error) {
-	db, err := sql.Open("postgress", url)
+	db, err := sql.Open("postgres", url)
 	if err != nil {
 		return nil, err
 	}

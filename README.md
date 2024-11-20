@@ -30,3 +30,25 @@ protoc -I=. --go_out=. --go-grpc_out=. order.proto
 
 export DATABASE_URL=postgres://admin:adminpassword@localhost/social?sslmode=disable
 ```
+
+```
+curl -X PUT "localhost:9200/products" -H 'Content-Type: application/json' -d '{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "text"
+      },
+      "description": {
+        "type": "text"
+      },
+      "price": {
+        "type": "float"
+      }
+    }
+  }
+}'
+
+```

@@ -10,6 +10,8 @@ services:
     environment:
       DATABASE_URL: postgres://pradeep:123456@account_db/pradeep?sslmode=disable
     restart: on-failure
+    networks:
+      - elastic_network
 
   catalog:
     build:
@@ -20,6 +22,8 @@ services:
     environment:
       DATABASE_URL: http://catalog_db:9200
     restart: on-failure
+    networks:
+      - elastic_network
 
   order:
     build:
@@ -32,6 +36,8 @@ services:
       ACCOUNT_SERVICE_URL: account:8080
       CATALOG_SERVICE_URL: catalog:8080
     restart: on-failure
+    networks:
+      - elastic_network
 
   graphql:
     build:
@@ -47,6 +53,8 @@ services:
       CATALOG_SERVICE_URL: catalog:8080
       ORDER_SERVICE_URL: order:8080
     restart: on-failure
+    networks:
+      - elastic_network
 
   account_db:
     build:
@@ -57,19 +65,23 @@ services:
       POSTGRES_USER: pradeep
       POSTGRES_PASSWORD: 123456
     restart: unless-stopped
+    networks:
+      - elastic_network
 
   catalog_db:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.0  # Updated to 8.x
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.0
     environment:
       ES_JAVA_OPTS: -Xms1g -Xmx1g
       discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
     ports:
       - "9200:9200"
       - "9300:9300"
     networks:
       - elastic_network
     restart: unless-stopped
-
 
   order_db:
     build:
@@ -80,6 +92,8 @@ services:
       POSTGRES_USER: pradeep
       POSTGRES_PASSWORD: 123456
     restart: unless-stopped
+    networks:
+      - elastic_network
 
 networks:
   elastic_network:

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -21,17 +20,15 @@ func main() {
 		log.Fatal(err)
 	}
 	var r catalog.Repository
-	retry.ForeverSleep(2*time.Second, func(i int) error {
-		fmt.Println("Database URL:", cfg.DatabaseURL)
+	retry.ForeverSleep(2*time.Second, func(_ int) (err error) {
 		r, err = catalog.NewElasticRepository(cfg.DatabaseURL)
 		if err != nil {
 			log.Println(err)
-			return err
 		}
-		return nil
+		return
 	})
 	defer r.Close()
-	log.Println("listening on port 8080")
+	log.Println("Listening on catalog port 8080...")
 	s := catalog.NewService(r)
 	log.Fatal(catalog.ListenGRPC(s, 8080))
 }

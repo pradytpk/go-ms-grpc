@@ -21,7 +21,7 @@ COPY catalog catalog
 RUN go build -mod=vendor -o /go/bin/app ./catalog/cmd/catalog
 
 # Use a minimal Alpine image for the runtime environment
-FROM alpine:3.11
+FROM alpine:3.20
 
 # Set the working directory
 WORKDIR /usr/bin

@@ -44,7 +44,7 @@ func (p *postgresRepository) Ping() error {
 
 // GetAccountByID implements Repositoy.
 func (p *postgresRepository) GetAccountByID(ctx context.Context, id string) (*Account, error) {
-	row := p.db.QueryRowContext(ctx, "SELECT id,name from accoutn WHERE id =$1", id)
+	row := p.db.QueryRowContext(ctx, "SELECT id,name from accounts WHERE id =$1", id)
 	a := &Account{}
 	if err := row.Scan(&a.ID, &a.Name); err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (p *postgresRepository) GetAccountByID(ctx context.Context, id string) (*Ac
 // ListAccounts implements Repositoy.
 func (p *postgresRepository) ListAccounts(ctx context.Context, skip uint64, take uint64) ([]Account, error) {
 	rows, err := p.db.QueryContext(ctx,
-		"SELECT id,name FROM account ORDER BY id DESC OFFSET $1 LIMIT $2",
+		"SELECT id,name FROM accounts ORDER BY id DESC OFFSET $1 LIMIT $2",
 		skip,
 		take)
 	if err != nil {
@@ -77,6 +77,6 @@ func (p *postgresRepository) ListAccounts(ctx context.Context, skip uint64, take
 
 // PutAccount implements Repositoy.
 func (p *postgresRepository) PutAccount(ctx context.Context, a Account) error {
-	_, err := p.db.ExecContext(ctx, "INSERT INTO account(id,name) VALUES($1,$2)", a.ID, a.Name)
+	_, err := p.db.ExecContext(ctx, "INSERT INTO accounts(id,name) VALUES($1,$2)", a.ID, a.Name)
 	return err
 }
