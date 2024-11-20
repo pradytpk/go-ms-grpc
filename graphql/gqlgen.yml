@@ -4,5 +4,5 @@ models:
   Account:
     model: github.com/pradytpk/go-ms-grpc/graphql.Account
     fields:
-        orders:
-          resolver: true
+      orders:
+        resolver: true

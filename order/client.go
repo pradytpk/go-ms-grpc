@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/pradytpk/go-ms-grpc/order/pb"
@@ -22,11 +23,15 @@ func NewClient(url string) (*Client, error) {
 	return &Client{conn, c}, nil
 }
 
-func (c *Client) Client() {
+func (c *Client) Close() {
 	c.conn.Close()
 }
 
-func (c *Client) PostOrder(ctx context.Context, accountID string, products []OrderedProduct) (*Order, error) {
+func (c *Client) PostOrder(
+	ctx context.Context,
+	accountID string,
+	products []OrderedProduct,
+) (*Order, error) {
 	protoProducts := []*pb.PostOrderRequest_OrderProduct{}
 	for _, p := range products {
 		protoProducts = append(protoProducts, &pb.PostOrderRequest_OrderProduct{
@@ -34,14 +39,18 @@ func (c *Client) PostOrder(ctx context.Context, accountID string, products []Ord
 			Quantity:  p.Quantity,
 		})
 	}
-	r, err := c.service.PostOrder(ctx, &pb.PostOrderRequest{
-		AccountId: accountID,
-		Products:  protoProducts,
-	})
+	r, err := c.service.PostOrder(
+		ctx,
+		&pb.PostOrderRequest{
+			AccountId: accountID,
+			Products:  protoProducts,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	// Create response order
 	newOrder := r.Order
 	newOrderCreatedAt := time.Time{}
 	newOrderCreatedAt.UnmarshalBinary(newOrder.CreatedAt)
@@ -55,13 +64,16 @@ func (c *Client) PostOrder(ctx context.Context, accountID string, products []Ord
 	}, nil
 }
 
-func (c *Client) GetOrdersForAccount(ctx context.Context, accountID string, products []OrderedProduct) ([]Order, error) {
+func (c *Client) GetOrdersForAccount(ctx context.Context, accountID string) ([]Order, error) {
 	r, err := c.service.GetOrdersForAccount(ctx, &pb.GetOrdersForAccountRequest{
 		AccountId: accountID,
 	})
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
+
+	// Create response orders
 	orders := []Order{}
 	for _, orderProto := range r.Orders {
 		newOrder := Order{
@@ -71,17 +83,19 @@ func (c *Client) GetOrdersForAccount(ctx context.Context, accountID string, prod
 		}
 		newOrder.CreatedAt = time.Time{}
 		newOrder.CreatedAt.UnmarshalBinary(orderProto.CreatedAt)
+
 		products := []OrderedProduct{}
 		for _, p := range orderProto.Products {
 			products = append(products, OrderedProduct{
-				p.Id,
-				p.Name,
-				p.Description,
-				p.Price,
-				p.Quantity,
+				ID:          p.Id,
+				Quantity:    p.Quantity,
+				Name:        p.Name,
+				Description: p.Description,
+				Price:       p.Price,
 			})
 		}
 		newOrder.Products = products
+
 		orders = append(orders, newOrder)
 	}
 	return orders, nil

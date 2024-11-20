@@ -56,7 +56,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateAccount func(childComplexity int, account AccountInput) int
-		CreateOrder   func(childComplexity int, order *OrderInput) int
+		CreateOrder   func(childComplexity int, order OrderInput) int
 		CreateProduct func(childComplexity int, product ProductInput) int
 	}
 
@@ -94,7 +94,7 @@ type AccountResolver interface {
 type MutationResolver interface {
 	CreateAccount(ctx context.Context, account AccountInput) (*Account, error)
 	CreateProduct(ctx context.Context, product ProductInput) (*Product, error)
-	CreateOrder(ctx context.Context, order *OrderInput) (*Order, error)
+	CreateOrder(ctx context.Context, order OrderInput) (*Order, error)
 }
 type QueryResolver interface {
 	Accounts(ctx context.Context, pagination *PaginationInput, id *string) ([]*Account, error)
@@ -163,7 +163,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateOrder(childComplexity, args["order"].(*OrderInput)), true
+		return e.complexity.Mutation.CreateOrder(childComplexity, args["order"].(OrderInput)), true
 
 	case "Mutation.createProduct":
 		if e.complexity.Mutation.CreateProduct == nil {
@@ -297,18 +297,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 }
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
-	rc := graphql.GetOperationContext(ctx)
-	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
+	opCtx := graphql.GetOperationContext(ctx)
+	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAccountInput,
 		ec.unmarshalInputOrderInput,
-		ec.unmarshalInputOrderedProductInput,
+		ec.unmarshalInputOrderProductInput,
 		ec.unmarshalInputPaginationInput,
 		ec.unmarshalInputProductInput,
 	)
 	first := true
 
-	switch rc.Operation.Operation {
+	switch opCtx.Operation.Operation {
 	case ast.Query:
 		return func(ctx context.Context) *graphql.Response {
 			var response graphql.Response
@@ -316,7 +316,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			if first {
 				first = false
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-				data = ec._Query(ctx, rc.Operation.SelectionSet)
+				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
 				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
 					result := <-ec.deferredResults
@@ -346,7 +346,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			}
 			first = false
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 
@@ -466,22 +466,22 @@ func (ec *executionContext) field_Mutation_createOrder_args(ctx context.Context,
 func (ec *executionContext) field_Mutation_createOrder_argsOrder(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (*OrderInput, error) {
+) (OrderInput, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["order"]
 	if !ok {
-		var zeroVal *OrderInput
+		var zeroVal OrderInput
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
 	if tmp, ok := rawArgs["order"]; ok {
-		return ec.unmarshalOOrderInput2ᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderInput(ctx, tmp)
+		return ec.unmarshalNOrderInput2githubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderInput(ctx, tmp)
 	}
 
-	var zeroVal *OrderInput
+	var zeroVal OrderInput
 	return zeroVal, nil
 }
 
@@ -1044,7 +1044,7 @@ func (ec *executionContext) _Mutation_createOrder(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateOrder(rctx, fc.Args["order"].(*OrderInput))
+		return ec.resolvers.Mutation().CreateOrder(rctx, fc.Args["order"].(OrderInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3756,7 +3756,7 @@ func (ec *executionContext) unmarshalInputOrderInput(ctx context.Context, obj in
 			it.AccountID = data
 		case "products":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("products"))
-			data, err := ec.unmarshalNOrderedProductInput2ᚕᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderedProductInputᚄ(ctx, v)
+			data, err := ec.unmarshalNOrderProductInput2ᚕᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderProductInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3767,8 +3767,8 @@ func (ec *executionContext) unmarshalInputOrderInput(ctx context.Context, obj in
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputOrderedProductInput(ctx context.Context, obj interface{}) (OrderedProductInput, error) {
-	var it OrderedProductInput
+func (ec *executionContext) unmarshalInputOrderProductInput(ctx context.Context, obj interface{}) (OrderProductInput, error) {
+	var it OrderProductInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -3808,7 +3808,7 @@ func (ec *executionContext) unmarshalInputPaginationInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"skip"}
+	fieldsInOrder := [...]string{"skip", "take"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3822,6 +3822,13 @@ func (ec *executionContext) unmarshalInputPaginationInput(ctx context.Context, o
 				return it, err
 			}
 			it.Skip = data
+		case "take":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("take"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Take = data
 		}
 	}
 
@@ -4756,6 +4763,33 @@ func (ec *executionContext) marshalNOrder2ᚖgithubᚗcomᚋpradytpkᚋgoᚑms�
 	return ec._Order(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNOrderInput2githubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderInput(ctx context.Context, v interface{}) (OrderInput, error) {
+	res, err := ec.unmarshalInputOrderInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNOrderProductInput2ᚕᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderProductInputᚄ(ctx context.Context, v interface{}) ([]*OrderProductInput, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*OrderProductInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNOrderProductInput2ᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderProductInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNOrderProductInput2ᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderProductInput(ctx context.Context, v interface{}) (*OrderProductInput, error) {
+	res, err := ec.unmarshalInputOrderProductInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNOrderedProduct2ᚕᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderedProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*OrderedProduct) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -4808,28 +4842,6 @@ func (ec *executionContext) marshalNOrderedProduct2ᚖgithubᚗcomᚋpradytpkᚋ
 		return graphql.Null
 	}
 	return ec._OrderedProduct(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNOrderedProductInput2ᚕᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderedProductInputᚄ(ctx context.Context, v interface{}) ([]*OrderedProductInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*OrderedProductInput, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNOrderedProductInput2ᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderedProductInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) unmarshalNOrderedProductInput2ᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderedProductInput(ctx context.Context, v interface{}) (*OrderedProductInput, error) {
-	res, err := ec.unmarshalInputOrderedProductInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNProduct2ᚕᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐProductᚄ(ctx context.Context, sel ast.SelectionSet, v []*Product) graphql.Marshaler {
@@ -5228,14 +5240,6 @@ func (ec *executionContext) marshalOOrder2ᚖgithubᚗcomᚋpradytpkᚋgoᚑms�
 		return graphql.Null
 	}
 	return ec._Order(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOOrderInput2ᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐOrderInput(ctx context.Context, v interface{}) (*OrderInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputOrderInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOPaginationInput2ᚖgithubᚗcomᚋpradytpkᚋgoᚑmsᚑgrpcᚋgraphqlᚐPaginationInput(ctx context.Context, v interface{}) (*PaginationInput, error) {
