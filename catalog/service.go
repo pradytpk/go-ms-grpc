@@ -35,12 +35,12 @@ func (c *catalogService) GetProducts(ctx context.Context, skip uint64, take uint
 	if take > 100 || (skip == 0 && take == 0) {
 		take = 100
 	}
-	return c.repository.ListsProducts(ctx, skip, take)
+	return c.repository.ListProducts(ctx, skip, take)
 }
 
 // GetProductsByID implements Service.
 func (c *catalogService) GetProductsByID(ctx context.Context, ids []string) ([]Product, error) {
-	return c.repository.ListsProductsWithIDs(ctx, ids)
+	return c.repository.ListProductsWithIDs(ctx, ids)
 }
 
 // PostProduct implements Service.

@@ -31,6 +31,8 @@ func ListenGRPC(s Service, port int) error {
 }
 
 func (s *grpcServer) PostProduct(ctx context.Context, r *pb.PostProductRequest) (*pb.PostProductResponse, error) {
+	log.Println("pos cat")
+	log.Println(r.Name, r.Description, r.Price)
 	p, err := s.service.PostProduct(ctx, r.Name, r.Description, r.Price)
 	if err != nil {
 		log.Println(err)

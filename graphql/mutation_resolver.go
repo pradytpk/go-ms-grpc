@@ -3,22 +3,20 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"time"
 
 	"github.com/pradytpk/go-ms-grpc/order"
 )
 
-type mutationResolver struct {
-	server *Server
-}
-
 var (
 	ErrInvalidParameter = errors.New("invalid parameter")
 )
 
-// CreateAccount
+type mutationResolver struct {
+	server *Server
+}
+
 func (r *mutationResolver) CreateAccount(ctx context.Context, in AccountInput) (*Account, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -37,17 +35,14 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, in AccountInput) (
 
 // CreateProduct
 func (r *mutationResolver) CreateProduct(ctx context.Context, in ProductInput) (*Product, error) {
+	log.Println("cre")
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	if in.Name == "" || in.Description == "" || in.Price <= 0 {
-		log.Println("Invalid input data")
-		return nil, fmt.Errorf("invalid product data")
-	}
-	p, err := r.server.catalogClient.PostProduct(ctx, in.Name, in.Description, in.Price)
 
+	p, err := r.server.catalogClient.PostProduct(ctx, in.Name, in.Description, in.Price)
 	if err != nil {
-		log.Printf("Error calling catalog service: %v", err)
-		return nil, fmt.Errorf("failed to create product: %w", err)
+		log.Println(err)
+		return nil, err
 	}
 
 	return &Product{
